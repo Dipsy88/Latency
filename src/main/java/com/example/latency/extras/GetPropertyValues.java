@@ -8,10 +8,10 @@ import java.util.Properties;
 
 public class GetPropertyValues {
 	private int recordsConsider = 0;
-	private double bestLatency = 0;
-	private double worstLatency = 0;
-	private double bestBandwidth = 0;
-	private double worstBandwidth = 0;
+	private int bestLatency = 0;
+	private int worstLatency = 0;
+	private int bestBandwidth = 0;
+	private int worstBandwidth = 0;
 
 	public void readValues() {
 		try {
@@ -28,10 +28,10 @@ public class GetPropertyValues {
 
 			// get the property value
 			recordsConsider = Integer.parseInt(properties.getProperty("recordsConsider"));
-			bestLatency = Double.parseDouble(properties.getProperty("bestLatency"));
-			worstLatency = Double.parseDouble(properties.getProperty("worstLatency"));
-			bestBandwidth = Double.parseDouble(properties.getProperty("bestBandwidth"));
-			worstBandwidth = Double.parseDouble(properties.getProperty("worstBandwidth"));
+			bestLatency = Integer.parseInt(properties.getProperty("bestLatency"));
+			worstLatency = Integer.parseInt(properties.getProperty("worstLatency"));
+			bestBandwidth = Integer.parseInt(properties.getProperty("bestBandwidth"));
+			worstBandwidth = Integer.parseInt(properties.getProperty("worstBandwidth"));
 
 		} catch (Exception e) {
 			System.out.println("Exception: " + e);
@@ -46,35 +46,35 @@ public class GetPropertyValues {
 		this.recordsConsider = recordsConsider;
 	}
 
-	public double getBestLatency() {
+	public int getBestLatency() {
 		return bestLatency;
 	}
 
-	public void setBestLatency(double bestLatency) {
+	public void setBestLatency(int bestLatency) {
 		this.bestLatency = bestLatency;
 	}
 
-	public double getWorstLatency() {
+	public int getWorstLatency() {
 		return worstLatency;
 	}
 
-	public void setWorstLatency(double worstLatency) {
+	public void setWorstLatency(int worstLatency) {
 		this.worstLatency = worstLatency;
 	}
 
-	public double getBestBandwidth() {
+	public int getBestBandwidth() {
 		return bestBandwidth;
 	}
 
-	public void setBestBandwidth(double bestBandwidth) {
+	public void setBestBandwidth(int bestBandwidth) {
 		this.bestBandwidth = bestBandwidth;
 	}
 
-	public double getWorstBandwidth() {
+	public int getWorstBandwidth() {
 		return worstBandwidth;
 	}
 
-	public void setWorstBandwidth(double worstBandwidth) {
+	public void setWorstBandwidth(int worstBandwidth) {
 		this.worstBandwidth = worstBandwidth;
 	}
 

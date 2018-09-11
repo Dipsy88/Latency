@@ -21,24 +21,24 @@ import com.example.latency.repository.CloudProviderRepository;
 public class CloudProviderController {
 
 	@Autowired
-	CloudProviderRepository cloudProviderRespository;
+	CloudProviderRepository cloudProviderRepository;
 
 	// Get All cloud providers
 	@GetMapping("/cloudprovider")
 	public List<CloudProvider> getAllCloudProvider() {
-		return cloudProviderRespository.findAll();
+		return cloudProviderRepository.findAll();
 	}
 
 	// Create a new cloud provider
 	@PostMapping("/cloudprovider")
 	public CloudProvider createCloudProvider(@Valid @RequestBody CloudProvider cloudProvider) {
-		return cloudProviderRespository.save(cloudProvider);
+		return cloudProviderRepository.save(cloudProvider);
 	}
 
 	// Get a single cloud provider
 	@GetMapping("/cloudprovider/{id}")
 	public CloudProvider getCloudProviderById(@PathVariable(value = "id") Long cloudProviderId) {
-		return cloudProviderRespository.findById(cloudProviderId)
+		return cloudProviderRepository.findById(cloudProviderId)
 				.orElseThrow(() -> new ResourceNotFoundException("CloudProvider", "id", cloudProviderId));
 	}
 
