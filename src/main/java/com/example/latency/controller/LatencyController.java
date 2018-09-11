@@ -24,12 +24,13 @@ import com.example.latency.repository.CloudProviderRepository;
 import com.example.latency.repository.DataCenterLatencyBandwidthRepository;
 import com.example.latency.repository.DataCenterRepository;
 
+//to enable the autowire functionality
 @SpringBootApplication
 @EnableJpaAuditing
 public class LatencyController {
 
 	private GetPropertyValues propValues = new GetPropertyValues(); // store config
-	private int max = 55; // number of records;
+	private int max = 55; // number of datacenters for random initialization;
 	private int numberOfDaysConsider = 30; // record from the history to consider
 
 	@Autowired
@@ -38,6 +39,8 @@ public class LatencyController {
 	private DataCenterRepository dataCenterRepository;
 	@Autowired
 	private DataCenterLatencyBandwidthRepository dataCenterLatencyBandwidthRepository;
+	@Autowired
+	private LocationController locationController = new LocationController();
 
 	List<String> dcPairList = new ArrayList<>();// list of paired dataset to get latency and ping for user defined ones
 	List<List<DCDistance>> dcDistanceList = new ArrayList<List<DCDistance>>();
@@ -53,8 +56,9 @@ public class LatencyController {
 		 * 
 		 */
 		createDataSet();
-		printDataStructure();
-		askUser();
+		printDataStructure(); // print the stored data structure
+		askUser(); // ask user the dataset they want to find the latency and bandwidth
+
 	}
 
 	public void createDataSet() {
@@ -86,7 +90,17 @@ public class LatencyController {
 		int bandWidth = 0;
 
 		if (dataCenterList.size() == 0) { // if no record exists
+			double distance = 0;
+			try {
+				distance = locationController.findLocation(dc1, dc2);
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 
+			Integer[] latArray = findlatlongWithDist(distance);
+			latency = latArray[0];
+			bandWidth = latArray[1];
 		} else {
 
 			for (DataCenterLatencyBandwidth dcLatencyBandwidthItem : dataCenterList) {
@@ -194,6 +208,44 @@ public class LatencyController {
 						dcGiven[0] + "\t" + dcGiven[1] + "\t" + item.getLatency() + "\t" + item.getBandwidth());
 			}
 		}
+	}
+
+	// return the latitude and longitude in an array
+	public Integer[] findlatlongWithDist(double distance) {
+		int latency = 0;
+		int bandwidth = 0;
+		if (distance < 10) {
+			latency = propValues.getBestLatency();
+			bandwidth = propValues.getBestBandwidth();
+		} else if (distance < 100) {
+			latency = generateRandomNum(propValues.getBestLatency(), propValues.getBestLatency() + (int) (distance));
+			bandwidth = generateRandomNum(propValues.getBestBandwidth() - (int) (distance),
+					propValues.getBestBandwidth());
+		} else if (distance < 500) {
+			latency = generateRandomNum(propValues.getBestLatency() + 100,
+					propValues.getBestLatency() + (int) (distance));
+			bandwidth = generateRandomNum(propValues.getBestBandwidth() - (int) (distance) - 100,
+					propValues.getBestBandwidth());
+		} else if (distance < 1000) {
+			latency = generateRandomNum(propValues.getBestLatency() + 500,
+					propValues.getBestLatency() + (int) (distance));
+			bandwidth = generateRandomNum(propValues.getBestBandwidth() - (int) (distance) - 500,
+					propValues.getBestBandwidth());
+		} else if (distance < 2000) {
+			latency = generateRandomNum(propValues.getBestLatency() + 1000,
+					propValues.getBestLatency() + (int) (distance));
+			bandwidth = generateRandomNum(propValues.getBestBandwidth() - (int) (distance) - 1000,
+					propValues.getBestBandwidth());
+		} else {
+			latency = propValues.getWorstLatency();
+			bandwidth = propValues.getWorstBandwidth();
+		}
+		if (latency > propValues.getWorstLatency())
+			latency = propValues.getWorstLatency();
+		if (bandwidth < propValues.getWorstBandwidth())
+			bandwidth = propValues.getWorstBandwidth();
+
+		return new Integer[] { latency, bandwidth };
 	}
 
 	// read the config properties
