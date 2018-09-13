@@ -12,14 +12,18 @@ import java.util.Optional;
 import java.util.Scanner;
 import java.util.concurrent.ThreadLocalRandom;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
+import org.springframework.scheduling.annotation.Async;
 
 import com.example.latency.extras.GetPropertyValues;
 import com.example.latency.model.DCDistance;
 import com.example.latency.model.DataCenter;
 import com.example.latency.model.DataCenterLatencyBandwidth;
+import com.example.latency.model.TwoDataCenterValues;
 import com.example.latency.repository.CloudProviderRepository;
 import com.example.latency.repository.DataCenterLatencyBandwidthRepository;
 import com.example.latency.repository.DataCenterRepository;
@@ -30,7 +34,7 @@ import com.example.latency.repository.DataCenterRepository;
 public class LatencyController {
 
 	private GetPropertyValues propValues = new GetPropertyValues(); // store config
-	private int max = 55; // number of datacenters for random initialization;
+	private int max = 30; // number of datacenters for random initialization;
 	private int numberOfDaysConsider = 30; // record from the history to consider
 
 	@Autowired
@@ -46,22 +50,38 @@ public class LatencyController {
 	List<List<DCDistance>> dcDistanceList = new ArrayList<List<DCDistance>>();
 	Map<String, List<DCDistance>> dcDistanceMap = new HashMap<String, List<DCDistance>>();
 
+	private static final Logger logger = LoggerFactory.getLogger(LatencyController.class);
+
+	@Async
 	public void run() {
-		simulateDataDatabase(); // read config
-
+		long currentTime = System.currentTimeMillis();
 		// this to initialize data
-		/*
-		 * int subtractNum = 180000; for (int i = 1; i < 5000; i++)
-		 * insertData(subtractNum * i);
-		 * 
-		 */
-		createDataSet();
-		printDataStructure(); // print the stored data structure
-		askUser(); // ask user the dataset they want to find the latency and bandwidth
 
+//		int subtractNum = 180000;
+//		for (int i = 1; i < 5000; i++)
+//			insertData(subtractNum * i);
+		storeInternally();
+		printDataStructure(); // print the stored data structure
+		while (true) {
+			long newTime = System.currentTimeMillis();
+			if ((newTime - currentTime) >= propValues.getTimeInterval() * 1000) {
+				storeInternally();
+				printDataStructure(); // print the stored data structure
+				currentTime = newTime;
+			}
+
+		}
+//		
+//		askUser(); // ask user the dataset they want to find the latency and bandwidth
 	}
 
-	public void createDataSet() {
+	public void insertData() {
+		int subtractNum = 18000;
+		for (int i = 1; i < 5000; i++)
+			insertData(subtractNum * i);
+	}
+
+	public void storeInternally() {
 		List<DataCenter> dataCenterList = dataCenterRepository.findAll();
 		for (int i = 0; i < dataCenterList.size(); i++) {
 			DataCenter dc1 = dataCenterList.get(i);
@@ -90,17 +110,17 @@ public class LatencyController {
 		int bandWidth = 0;
 
 		if (dataCenterList.size() == 0) { // if no record exists
-			double distance = 0;
-			try {
-				distance = locationController.findLocation(dc1, dc2);
-			} catch (Exception e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
 
-			Integer[] latArray = findlatlongWithDist(distance);
-			latency = latArray[0];
-			bandWidth = latArray[1];
+			// this computes distance and calculates latency and bandwidth
+			/*
+			 * double distance = 0; try { distance = locationController.findLocation(dc1,
+			 * dc2); Thread.sleep(1000); } catch (Exception e) { // TODO Auto-generated
+			 * catch block e.printStackTrace(); }
+			 * 
+			 * Integer[] latArray = findlatlongWithDist(distance); latency = latArray[0];
+			 * bandWidth = latArray[1];
+			 * 
+			 */
 		} else {
 
 			for (DataCenterLatencyBandwidth dcLatencyBandwidthItem : dataCenterList) {
@@ -111,15 +131,16 @@ public class LatencyController {
 			latency = latency / dataCenterList.size();
 			bandWidth = bandWidth / dataCenterList.size();
 
+//		}
+			DCDistance dcDistanceNew = new DCDistance(dc2, latency, bandWidth);
+			List<DCDistance> dcDistanceList = new ArrayList<DCDistance>();
+
+			if (dcDistanceMap.containsKey(dc1)) // if dc1 already exists
+				dcDistanceList = dcDistanceMap.get(dc1);
+
+			dcDistanceList.add(dcDistanceNew);
+			dcDistanceMap.put(dc1, dcDistanceList);
 		}
-		DCDistance dcDistanceNew = new DCDistance(dc2, latency, bandWidth);
-		List<DCDistance> dcDistanceList = new ArrayList<DCDistance>();
-
-		if (dcDistanceMap.containsKey(dc1)) // if dc1 already exists
-			dcDistanceList = dcDistanceMap.get(dc1);
-
-		dcDistanceList.add(dcDistanceNew);
-		dcDistanceMap.put(dc1, dcDistanceList);
 	}
 
 	// use gps coordinate to calculate the latency and bandwidth
@@ -150,7 +171,7 @@ public class LatencyController {
 		int bandwidth = generateRandomNum(propValues.getBestLatency(), propValues.getWorstLatency());
 
 		Date time = new Date(System.currentTimeMillis() - subtractNum);
-		System.out.println(time);
+//		System.out.println(time);
 
 		DataCenterLatencyBandwidth data = new DataCenterLatencyBandwidth(nameList[0], nameList[1], time, latency,
 				bandwidth);
@@ -160,11 +181,14 @@ public class LatencyController {
 
 	// print the stored datastructure
 	public void printDataStructure() {
-		System.out.println("datacenter1" + "\t" + "datacenter2" + "\t" + "latency" + "\t" + "bandwidth");
+//		System.out.println("datacenter1" + "\t" + "datacenter2" + "\t" + "latency" + "\t" + "bandwidth");
+		logger.info("datacenter1" + "\t" + "datacenter2" + "\t" + "latency" + "\t" + "bandwidth");
 		for (Entry<String, List<DCDistance>> entry : dcDistanceMap.entrySet()) {
 			String dc1Name = entry.getKey();
 			for (DCDistance dcDistance : entry.getValue()) {
-				System.out.println(dc1Name + "\t" + dcDistance.getName() + "\t" + dcDistance.getLatency() + "\t"
+//				System.out.println(dc1Name + "\t" + dcDistance.getName() + "\t" + dcDistance.getLatency() + "\t"
+//						+ dcDistance.getBandwidth());
+				logger.info(dc1Name + "\t" + dcDistance.getName() + "\t" + dcDistance.getLatency() + "\t"
 						+ dcDistance.getBandwidth());
 			}
 		}
@@ -196,6 +220,31 @@ public class LatencyController {
 		}
 		System.out.println("Thanks for asking!");
 
+	}
+
+	public TwoDataCenterValues calculateTwoDataCenter(String dc1, String dc2) {
+		TwoDataCenterValues twoDataCenterValues = null;
+		String[] dcGiven = { dc1, dc2 };
+		Arrays.sort(dcGiven, String.CASE_INSENSITIVE_ORDER);
+		if (dcPairList.contains(dcGiven[0] + "," + dcGiven[1])) {
+			twoDataCenterValues = calculateLatencyBandwidth(dcGiven);
+			printForGiven(dcGiven);
+		} else
+			System.out.println("Unfortunately we do not have data for that");
+		return twoDataCenterValues;
+	}
+
+	// return the latency, bandwidth, datacenter1, and datacenter2
+	public TwoDataCenterValues calculateLatencyBandwidth(String[] dcGiven) {
+		TwoDataCenterValues twoDataCenterValues = null;
+		List<DCDistance> dcDistance = dcDistanceMap.get(dcGiven[0]);
+		for (DCDistance item : dcDistance) {
+			if (item.getName().equalsIgnoreCase(dcGiven[1])) {
+				twoDataCenterValues = new TwoDataCenterValues(dcGiven[0], dcGiven[1], item.getLatency(),
+						item.getBandwidth());
+			}
+		}
+		return twoDataCenterValues;
 	}
 
 	// print the latency and bandwidth for user input
@@ -270,6 +319,14 @@ public class LatencyController {
 	public int generateRandomNum(int min, int max) {
 		int retNum = ThreadLocalRandom.current().nextInt(min, max + 1);
 		return retNum;
+	}
+
+	public GetPropertyValues getPropValues() {
+		return propValues;
+	}
+
+	public void setPropValues(GetPropertyValues propValues) {
+		this.propValues = propValues;
 	}
 
 }

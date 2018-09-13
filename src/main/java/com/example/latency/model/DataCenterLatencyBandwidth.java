@@ -12,7 +12,6 @@ import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 
-import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 @Entity
@@ -29,7 +28,7 @@ public class DataCenterLatencyBandwidth {
 	private String dc2;
 	@Column(name = "timestamp", nullable = false)
 	@Temporal(TemporalType.TIMESTAMP)
-	@CreatedDate
+//	@CreatedDate
 	private Date timestamp;
 	@Column(name = "bandwidth", nullable = false)
 	private int bandwidth;

@@ -12,7 +12,11 @@ public class GetPropertyValues {
 	private int worstLatency = 0;
 	private int bestBandwidth = 0;
 	private int worstBandwidth = 0;
+	private int timeInterval = 0;
+	private String function = "";
+	private int timePurge = 0;
 
+//	read the config files and populate the elements
 	public void readValues() {
 		try {
 			Properties properties = new Properties();
@@ -32,6 +36,9 @@ public class GetPropertyValues {
 			worstLatency = Integer.parseInt(properties.getProperty("worstLatency"));
 			bestBandwidth = Integer.parseInt(properties.getProperty("bestBandwidth"));
 			worstBandwidth = Integer.parseInt(properties.getProperty("worstBandwidth"));
+			timeInterval = Integer.parseInt(properties.getProperty("timeInterval"));
+			function = properties.getProperty("function");
+			timePurge = Integer.parseInt(properties.getProperty("timePurge"));
 
 		} catch (Exception e) {
 			System.out.println("Exception: " + e);
@@ -76,6 +83,30 @@ public class GetPropertyValues {
 
 	public void setWorstBandwidth(int worstBandwidth) {
 		this.worstBandwidth = worstBandwidth;
+	}
+
+	public int getTimeInterval() {
+		return timeInterval;
+	}
+
+	public void setTimeInterval(int timeInterval) {
+		this.timeInterval = timeInterval;
+	}
+
+	public String getFunction() {
+		return function;
+	}
+
+	public void setFunction(String function) {
+		this.function = function;
+	}
+
+	public int getTimePurge() {
+		return timePurge;
+	}
+
+	public void setTimePurge(int timePurge) {
+		this.timePurge = timePurge;
 	}
 
 }
